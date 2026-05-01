@@ -831,13 +831,17 @@ const CARD_TEXTS = [
     if (voice.paused) voice.play();
     else voice.pause();
   });
+  const bg = document.getElementById('bgMusic');
+
   voice.addEventListener('play', () => {
     playBtn.textContent = '❚❚';
     player.classList.add('playing');
+    if (!bg.paused) bg.pause();
   });
   voice.addEventListener('pause', () => {
     playBtn.textContent = '▶';
     player.classList.remove('playing');
+    if (bg.paused) bg.play().catch(() => {});
   });
   voice.addEventListener('timeupdate', () => {
     if (voice.duration) bar.style.width = (voice.currentTime / voice.duration * 100) + '%';
@@ -846,6 +850,7 @@ const CARD_TEXTS = [
     playBtn.textContent = '▶';
     player.classList.remove('playing');
     bar.style.width = '0%';
+    if (bg.paused) bg.play().catch(() => {});
   });
   progress.addEventListener('click', (e) => {
     const rect = progress.getBoundingClientRect();
