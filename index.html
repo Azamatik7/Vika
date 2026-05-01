@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Вика — 4 мая 2025</title>
+<title>Вика — 4 мая 2026</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -407,6 +407,30 @@ section {
   transition: width 0.1s linear;
 }
 
+/* ============== КОНФЕТТИ HERO ============== */
+#hero-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.hero-bday {
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  background: linear-gradient(135deg, #fbbf24, #ec4899, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 4px;
+  margin-bottom: 16px;
+  animation: bdayPulse 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+@keyframes bdayPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.5)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(236, 72, 153, 0.8)); }
+}
+
 /* ============== ФИНАЛ ============== */
 .final {
   text-align: center;
@@ -520,8 +544,10 @@ section {
 
 <!-- ========= 1. HERO ========= -->
 <section class="hero">
+  <canvas id="hero-confetti"></canvas>
+  <p class="hero-bday">С днём рождения!</p>
   <h1 class="hero-name">Вика</h1>
-  <p class="hero-date">4 мая 2025</p>
+  <p class="hero-date">4 мая 2026</p>
   <div class="scroll-hint">↓</div>
 </section>
 
@@ -558,7 +584,7 @@ section {
 
 <!-- ========= 3. ГАЛЕРЕЯ ========= -->
 <section>
-  <h2 class="section-title">Моменты</h2>
+  <h2 class="section-title">ты красивая всегда!</h2>
   <div class="gallery" id="gallery"></div>
 </section>
 
@@ -677,7 +703,7 @@ section {
 })();
 
 /* ============== ГАЛЕРЕЯ ============== */
-const TOTAL_PHOTOS = 16;
+const TOTAL_PHOTOS = 17;
 const LARGE_INDICES = new Set([1, 6, 11]);
 const TALL_INDICES  = new Set([4, 13]);
 const WIDE_INDICES  = new Set([8]);
@@ -819,14 +845,16 @@ const CARD_TEXTS = [
   let userPaused = false;
 
   function tryPlay() {
-    bg.play().catch(() => {
-      const onClick = () => {
-        if (!userPaused) bg.play().catch(() => {});
-        document.removeEventListener('click', onClick);
-      };
-      document.addEventListener('click', onClick);
-    });
+    bg.play().catch(() => {});
   }
+
+  const EVENTS = ['click', 'touchstart', 'keydown', 'scroll', 'mousemove'];
+  function onFirstInteraction() {
+    if (!userPaused && bg.paused) bg.play().catch(() => {});
+    EVENTS.forEach(ev => document.removeEventListener(ev, onFirstInteraction));
+  }
+  EVENTS.forEach(ev => document.addEventListener(ev, onFirstInteraction, { once: true, passive: true }));
+
   tryPlay();
 
   function refreshIcon() {
@@ -842,6 +870,61 @@ const CARD_TEXTS = [
   });
   bg.addEventListener('play', refreshIcon);
   bg.addEventListener('pause', refreshIcon);
+})();
+
+/* ============== КОНФЕТТИ В HERO ============== */
+(function () {
+  const canvas = document.getElementById('hero-confetti');
+  const ctx = canvas.getContext('2d');
+  const hero = canvas.parentElement;
+  let particles = [];
+
+  function resize() {
+    canvas.width = hero.clientWidth;
+    canvas.height = hero.clientHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const colors = ['#a855f7', '#ec4899', '#f9a8d4', '#d8b4fe', '#fbbf24', '#fb7185', '#c084fc'];
+
+  function spawn() {
+    for (let i = 0; i < 160; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -10 - Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 1.5 + Math.random() * 3,
+        size: 4 + Math.random() * 7,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.15,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 1
+      });
+    }
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles = particles.filter(p => p.y < canvas.height + 20 && p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= 0.003;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.55);
+      ctx.restore();
+    }
+    requestAnimationFrame(tick);
+    if (particles.length < 80) spawn();
+  }
+  spawn();
+  tick();
 })();
 
 /* ============== КОНФЕТТИ В ФИНАЛЕ ============== */
