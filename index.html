@@ -465,6 +465,39 @@ section {
 }
 
 /* ============== ЦИТАТА РАССТОЯНИЕ ============== */
+.distance-block {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.distance-km-label {
+  font-size: 1.1rem;
+  color: #a855f7;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+.distance-counter {
+  font-size: clamp(5rem, 15vw, 9rem);
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: Georgia, serif;
+  letter-spacing: 4px;
+  filter: drop-shadow(0 0 30px rgba(236, 72, 153, 0.4));
+  line-height: 1;
+  min-width: 4ch;
+  display: inline-block;
+}
+.distance-sub {
+  margin-top: 16px;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-style: italic;
+  color: #d8b4fe;
+  letter-spacing: 2px;
+  opacity: 0.85;
+}
 .distance-text {
   font-size: clamp(1.4rem, 3vw, 2.2rem);
   font-style: italic;
@@ -608,6 +641,11 @@ section {
 
 <!-- ========= 4.5 ЦИТАТА ========= -->
 <section>
+  <div class="distance-block fade-up">
+    <div class="distance-km-label">км между нами</div>
+    <div class="distance-counter" id="distanceCounter">0</div>
+    <div class="distance-sub">мне не важно — 300 или 6300</div>
+  </div>
   <p class="distance-text fade-up">хоть расстояние и разделяет нас, я хочу быть рядом всегда</p>
 </section>
 
@@ -892,6 +930,39 @@ const CARD_TEXTS = [
   });
   bg.addEventListener('play', refreshIcon);
   bg.addEventListener('pause', refreshIcon);
+})();
+
+/* ============== ОДОМЕТР РАССТОЯНИЯ ============== */
+(function () {
+  const el = document.getElementById('distanceCounter');
+  let started = false;
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function countTo(from, to, duration, onUpdate, onDone) {
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / duration, 1);
+      onUpdate(Math.round(from + (to - from) * easeOut(t)));
+      if (t < 1) requestAnimationFrame(step);
+      else { onUpdate(to); if (onDone) onDone(); }
+    }
+    requestAnimationFrame(step);
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (e.isIntersecting && !started) {
+        started = true;
+        countTo(0, 300, 1500, (v) => { el.textContent = v.toLocaleString('ru'); }, () => {
+          setTimeout(() => {
+            countTo(300, 6300, 1800, (v) => { el.textContent = v.toLocaleString('ru'); });
+          }, 1200);
+        });
+      }
+    });
+  }, { threshold: 0.4 });
+  io.observe(el);
 })();
 
 /* ============== КОНФЕТТИ В HERO ============== */
